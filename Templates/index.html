@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Skill-Based Course Recommendations</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg-main: #f5f7fb;
+            --card-bg: #fff;
+            --primary: #4377e7;
+            --primary-dark: #3055a5;
+            --accent: #18b091;
+            --shadow: rgba(67,119,231,0.08) 0px 4px 18px;
+            --border-radius: 16px;
+            --input-bg: #f0f4fa;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg-main);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 850px;
+            margin: 36px auto;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 36px 40px 30px 40px;
+            box-shadow: var(--shadow);
+        }
+        h1 {
+            text-align: center;
+            color: var(--primary-dark);
+            letter-spacing: 1.2px;
+            margin-bottom: 20px;
+        }
+        h2, h3 {
+            color: var(--primary-dark);
+            margin-top: 36px;
+            margin-bottom: 12px;
+        }
+        form label {
+            color: #444;
+            font-weight: 600;
+            margin-bottom: 3px;
+            display: block;
+        }
+        textarea, input[type=text], select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 7px;
+            border: 1px solid #d4deee;
+            background: var(--input-bg);
+            outline: none;
+            font-size: 16px;
+            margin-bottom: 12px;
+            transition: border 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border: 1.5px solid var(--primary);
+        }
+        .skill-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .skill-row input[type=text] {
+            flex-grow: 2;
+        }
+        .skill-row .remove-skill-btn {
+            padding: 4px 10px;
+            background: #ea4d4d;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+        .add-btn, .submit-btn {
+            background: var(--primary);
+            color: #fff;
+            padding: 9px 22px;
+            border: none;
+            border-radius: 7px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.2s;
+            box-shadow: 0 2px 6px #dbdbeb7d;
+        }
+        .add-btn:hover, .submit-btn:hover {
+            background: var(--primary-dark);
+        }
+        .course-section {
+            margin-top: 32px;
+            background: #f3f6ff;
+            border-radius: var(--border-radius);
+            padding: 32px 24px 22px 24px;
+            box-shadow: 0 1px 7px #b9c6ea22;
+        }
+        .filters {
+            display: flex;
+            gap: 22px;
+            margin-bottom: 25px;
+        }
+        .filters label {
+            font-weight: 400;
+            color: #222;
+        }
+        .course-list {
+            border-spacing: 0 9px;
+        }
+        .course-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: var(--card-bg);
+            border-radius: 9px;
+            padding: 14px 19px 12px 16px;
+            margin-bottom: 11px;
+            box-shadow: 0 2px 9px #e3e5ef38;
+            border-left: 5px solid var(--primary);
+            animation: fadein 0.8s;
+        }
+        @keyframes fadein {
+            from { opacity: 0; transform: translateY(25px);}
+            to { opacity: 1; transform: none;}
+        }
+        .course-title {
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .course-title:hover {
+            text-decoration: underline;
+        }
+        .course-meta {
+            font-size: 14px;
+            color: #5d74a2;
+            margin-top: 7px;
+        }
+        .score-badge {
+            background: var(--accent);
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 600;
+            padding: 2.5px 10px;
+            font-size: 14px;
+            margin-left: 7px;
+            vertical-align: middle;
+        }
+        .summary-block {
+            background: #eaf3ff;
+            border-radius: 10px;
+            padding: 15px 17px;
+            margin: 20px 0 35px 0;
+            font-size: 16px;
+            color: #2f3c4e;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 11px 2vw; }
+            .course-section { padding: 14px 3vw 12px 3vw; }
+            .course-item { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>Skill-Based Course Recommendation</h1>
+
+<form method="POST" id="main-form">
+    <label for="role">Target Job Role</label>
+    <textarea id="role" name="role" rows="2" placeholder="e.g., Data Scientist, Backend Engineer, ML Engineer" required>{{ role or '' }}</textarea>
+
+    <label>Your Skills and Ratings</label>
+    <div id="skills-container">
+        <div class="skill-row">
+            <input type="text" name="skill[]" placeholder="Skill name (e.g., Python)" required />
+            <select name="rating[]">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <button type="button" class="remove-skill-btn" style="display:none;">✕</button>
+        </div>
+    </div>
+    <button type="button" class="add-btn" id="add-skill-btn">+ Add Skill</button>
+    <button type="submit" class="submit-btn">Get Recommendations</button>
+</form>
+
+{% if role %}
+    <div class="summary-block">
+        <b>Matched Role:</b> {{ role }}<br>
+        <b>Strong Skills:</b> {{ strong | join(', ') if strong else 'None' }}<br>
+        <b>Weak Skills:</b> {{ weak | join(', ') if weak else 'None' }}<br>
+        <b>Missing Skills:</b> {{ missing | join(', ') if missing else 'None' }}
+    </div>
+
+    <div class="course-section">
+        <h3 style="display: flex; justify-content: space-between; align-items: center;">
+            Udemy Course Recommendations 
+            <img src="{{ url_for('static', filename='images/udemy_logo.png') }}" alt="Coursera" style="height:28px; margin-left: 10px;">
+        </h3>
+        <div class="filters">
+            <label>Sort by Enrollment:
+                <select id="udemy-enroll-sort">
+                    <option value="desc">High to Low</option>
+                    <option value="asc">Low to High</option>
+                </select>
+            </label>
+            <label>Sort by Rating:
+                <select id="udemy-rating-sort">
+                    <option value="desc">High to Low</option>
+                    <option value="asc">Low to High</option>
+                </select>
+            </label>
+        </div>
+        <div id="udemy-courses">
+            {% for course in udemy %}
+            <div class="course-item" data-enrollment="{{ course.enrollment }}" data-rating="{{ course.rating }}">
+                <div>
+                    <a class="course-title" href="{{ course.link }}" target="_blank">{{ course.title }}</a>
+                    
+                    <div class="course-meta">
+                        Enrollment: {{ course.enrollment }} · Rating: {{ course.rating }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p>No Udemy courses found.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="course-section">
+        <h3 style="display: flex; justify-content: space-between; align-items: center;">
+            Coursera Course Recommendations 
+            <img src="{{ url_for('static', filename='images/coursera_logo.png') }}" alt="Coursera" style="height:48px; margin-left: 10px; object-fit: contain;">
+        </h3>
+        <div class="filters">
+            <label>Sort by Enrollment:
+                <select id="coursera-enroll-sort">
+                    <option value="desc">High to Low</option>
+                    <option value="asc">Low to High</option>
+                </select>
+            </label>
+            <label>Sort by Rating:
+                <select id="coursera-rating-sort">
+                    <option value="desc">High to Low</option>
+                    <option value="asc">Low to High</option>
+                </select>
+            </label>
+        </div>
+        <div id="coursera-courses">
+            {% for course in coursera %}
+            <div class="course-item" data-enrollment="{{ course.enrollment }}" data-rating="{{ course.rating }}">
+                <div>
+                    <a class="course-title" href="{{ course.link }}" target="_blank">{{ course.title }}</a>
+                    
+                    <div class="course-meta">
+                        Enrollment: {{ course.enrollment }} · Rating: {{ course.rating }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p>No Coursera courses found.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+</div>
+
+<script>
+    // Add/Remove skill fields dynamically
+    document.getElementById("add-skill-btn").onclick = function() {
+        const container = document.getElementById("skills-container");
+        const newSkillRow = document.createElement("div");
+        newSkillRow.className = "skill-row";
+        newSkillRow.innerHTML = `
+            <input type="text" name="skill[]" placeholder="Skill name (e.g., Python)" required />
+            <select name="rating[]">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <button type="button" class="remove-skill-btn">✕</button>
+        `;
+        container.appendChild(newSkillRow);
+        newSkillRow.querySelector('.remove-skill-btn').onclick = function() {
+            newSkillRow.remove();
+        };
+        // Show the remove button on all but the first row
+        document.querySelectorAll('.skill-row .remove-skill-btn').forEach(btn => btn.style.display = "");
+    };
+
+    // Sorting function
+    function sortCourses(containerId, sortBy, order) {
+        const container = document.getElementById(containerId);
+        const items = Array.from(container.querySelectorAll(".course-item"));
+        items.sort((a, b) => {
+            let valA = parseFloat(a.dataset[sortBy]);
+            let valB = parseFloat(b.dataset[sortBy]);
+            return order === "asc" ? valA - valB : valB - valA;
+        });
+        items.forEach(item => container.appendChild(item));
+    }
+    document.getElementById("udemy-enroll-sort").addEventListener("change", e => {
+        sortCourses("udemy-courses", "enrollment", e.target.value);
+    });
+    document.getElementById("udemy-rating-sort").addEventListener("change", e => {
+        sortCourses("udemy-courses", "rating", e.target.value);
+    });
+    document.getElementById("coursera-enroll-sort").addEventListener("change", e => {
+        sortCourses("coursera-courses", "enrollment", e.target.value);
+    });
+    document.getElementById("coursera-rating-sort").addEventListener("change", e => {
+        sortCourses("coursera-courses", "rating", e.target.value);
+    });
+</script>
+</body>
+</html>
+
